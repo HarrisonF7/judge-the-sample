@@ -16,12 +16,7 @@ my agent about it, and do not edit it afterwards; add a dated revision below ins
 
 ## 2. Design choices
 
-For each stage: the option I chose, why, and what it is meant to help a user learn.
-
-- Stage 2, visualization (include one visual feature meant to reveal a sampling problem):
-- Stage 3, sampling interactions and stratification column:
-- Stage 4, presentation of the method comparison and sample-size experiments:
-- Stage 5, challenge controls:
+Stage 2, visualization: I chose side-by-side histograms showing the waiting times for the full population and the sample, along with a chronological strip highlighting the selected appointments. I chose this design because it makes it easy to compare the sample with the population and see where the sampled appointments fall within the full dataset. The chronological strip is meant to help users recognize whether the sample is spread across the appointment schedule or concentrated in certain areas, which could reveal a sampling problem.
 
 ## 3. Results table
 
