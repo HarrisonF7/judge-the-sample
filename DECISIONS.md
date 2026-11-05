@@ -20,6 +20,9 @@ Stage 2, visualization: I chose side-by-side histograms showing the waiting time
 
 Stage 3, sampling interactions and stratification column: I chose Option 1, which lets users view one sampling method at a time. Users can switch between simple random, systematic, and stratified sampling while keeping the same histogram and chronological selection strip. I chose this because it keeps the app organized and makes it easier to understand how each sampling method selects appointments. For stratified sampling, I chose weekday as the grouping variable so users can see how appointments are sampled across the five weekdays. Stratified sampling will require a sample size of at least five so every weekday is represented.
 
+- Stage 4, presentation of the method comparison and sample-size experiments: I chose Option 2, which displays both repeated-sampling experiments together on one dashboard. The first experiment compares simple random, systematic, and stratified sampling at a sample size of 100, while the second compares simple random sampling at sample sizes of 1, 10, and 100. I chose this design because it makes it easier to compare the distributions of sample estimates and understand how sampling methods and sample sizes affect bias, standard deviation, and RMSE. The dashboard will also distinguish exact systematic results from Monte Carlo simulations.
+
+
 ## 3. Results table
 
 One row per result I read from my app. Add rows as needed. Rerun and update a row whenever I

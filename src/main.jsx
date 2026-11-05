@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import csv from '../data/clinic_visits.csv?raw';
 import { parseVisits, createDisplay } from './sampling.js';
 import './style.css';
+import Experiments from './Experiments.jsx';
 
 const SEED = 20261105;
 const DEFAULT_N = 100;
@@ -81,6 +82,7 @@ function App() {
       </svg><p className="axis-note">Read left to right within each week, then continue on the next row. Appointment 1 → appointment 10,000.</p></div></div>
       <details><summary>View the {display.sample.length} selected appointment IDs</summary><p className="ids">{display.sample.map(row => row.visit_id).sort((a, b) => a - b).join(', ')}</p></details>
     </section>
+    <Experiments population={population} />
     <footer>Source: simulated clinic_visits.csv · Waiting times are measured in minutes. Original data remain unchanged.</footer>
   </main>;
 }

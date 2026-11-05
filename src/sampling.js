@@ -103,3 +103,65 @@ export function createDisplay(rows, n, seed, method = 'srs') {
   const maxPercent = Math.max(...populationBins.map(b => b.percent), ...sampleBins.map(b => b.percent));
   return { ...details, blocked, sample, populationBins, sampleBins, populationMean: meanWait(rows), sampleMean: blocked ? null : method === 'stratified' ? details.estimate : meanWait(sample), yMax: Math.max(5, Math.ceil(maxPercent / 5) * 5) };
 }
+
+export function summarizeEstimates(estimates, trueMean) {
+  if (!estimates.length) throw new Error('Estimates are required.');
+  const average = estimates.reduce((s, x) => s + x, 0) / estimates.length;
+  const bias = average - trueMean;
+  const sd = Math.sqrt(estimates.reduce((s, x) => s + (x - average) ** 2, 0) / estimates.length);
+  const rmse = Math.sqrt(estimates.reduce((s, x) => s + (x - trueMean) ** 2, 0) / estimates.length);
+  return { bias, sd, rmse };
+}
+
+export function repeatedSampling(rows, method, n, seed, repetitions = 100) {
+  if (!Number.isInteger(n) || n < 1 || n > rows.length) throw new Error('Invalid sample size.');
+  const trueMean = meanWait(rows);
+  const exact = method === 'systematic' && rows.length % n === 0;
+  const estimates = [];
+  let allocation;
+  if (exact) {
+    const interval = rows.length / n;
+    for (let start = 1; start <= interval; start++) {
+      estimates.push(meanWait(Array.from({ length: n }, (_, j) => rows[start - 1 + j * interval])));
+    }
+  } else {
+    if (![100, 1000].includes(repetitions)) throw new Error('Choose 100 or 1,000 repetitions.');
+    const random = seededRandom(seed);
+    for (let i = 0; i < repetitions; i++) {
+      const repetitionSeed = Math.floor(random() * 4294967296);
+      if (method === 'srs') estimates.push(meanWait(simpleRandomSample(rows, n, repetitionSeed)));
+      else if (method === 'stratified') {
+        const result = stratifiedSample(rows, n, repetitionSeed);
+        estimates.push(result.estimate);
+        allocation = result.allocation.map(g => ({ day: g.day, population: g.rows.length, count: g.count, weight: g.weight }));
+      } else if (method === 'systematic') estimates.push(meanWait(systematicSample(rows, n, repetitionSeed).sample));
+      else throw new Error('Unknown sampling method.');
+    }
+  }
+  return { population: 'Baseline', method, n, type: exact ? 'Exact' : 'Monte Carlo', seed: exact ? null : seed, count: estimates.length, estimates, trueMean, allocation, ...summarizeEstimates(estimates, trueMean) };
+}
+
+export function runExperiments(rows, seed, repetitions) {
+  const srs100 = repeatedSampling(rows, 'srs', 100, seed, repetitions);
+  return {
+    seed, repetitions,
+    methods: [srs100, repeatedSampling(rows, 'systematic', 100, seed, repetitions), repeatedSampling(rows, 'stratified', 100, seed, repetitions)],
+    sizes: [repeatedSampling(rows, 'srs', 1, seed, repetitions), repeatedSampling(rows, 'srs', 10, seed, repetitions), srs100],
+  };
+}
+
+// One common bin range and percentage scale per comparison, including the true mean.
+export function estimateDistributions(results) {
+  const values = results.flatMap(r => [...r.estimates, r.trueMean]);
+  const minimum = Math.min(...values);
+  const maximum = Math.max(...values);
+  const padding = Math.max((maximum - minimum) * 0.05, 0.1);
+  const lower = minimum - padding, upper = maximum + padding;
+  const width = (upper - lower) / 20;
+  const charts = results.map(result => {
+    const bins = Array.from({ length: 20 }, (_, i) => ({ start: lower + i * width, end: lower + (i + 1) * width, count: 0 }));
+    for (const value of result.estimates) bins[Math.min(19, Math.max(0, Math.floor((value - lower) / width)))].count++;
+    return bins.map(bin => ({ ...bin, percent: bin.count / result.count * 100 }));
+  });
+  return { lower, upper, charts, yMax: Math.max(5, Math.ceil(Math.max(...charts.flat().map(b => b.percent)) / 5) * 5) };
+}
