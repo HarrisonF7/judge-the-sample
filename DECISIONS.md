@@ -18,6 +18,8 @@ my agent about it, and do not edit it afterwards; add a dated revision below ins
 
 Stage 2, visualization: I chose side-by-side histograms showing the waiting times for the full population and the sample, along with a chronological strip highlighting the selected appointments. I chose this design because it makes it easy to compare the sample with the population and see where the sampled appointments fall within the full dataset. The chronological strip is meant to help users recognize whether the sample is spread across the appointment schedule or concentrated in certain areas, which could reveal a sampling problem.
 
+Stage 3, sampling interactions and stratification column: I chose Option 1, which lets users view one sampling method at a time. Users can switch between simple random, systematic, and stratified sampling while keeping the same histogram and chronological selection strip. I chose this because it keeps the app organized and makes it easier to understand how each sampling method selects appointments. For stratified sampling, I chose weekday as the grouping variable so users can see how appointments are sampled across the five weekdays. Stratified sampling will require a sample size of at least five so every weekday is represented.
+
 ## 3. Results table
 
 One row per result I read from my app. Add rows as needed. Rerun and update a row whenever I

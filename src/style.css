@@ -10,8 +10,8 @@ p { line-height: 1.6; margin: 8px 0 16px; }
 .context p:last-child { margin-bottom: 0; }
 .seed-control { margin: 16px 0; }
 .seed-control label { display: block; font-weight: 650; margin-bottom: 6px; }
-.seed-control input { font: inherit; padding: 8px 10px; width: 220px; max-width: 100%; border: 1px solid #426772; border-radius: 4px; }
-.seed-control input:focus { outline: 3px solid #397184; outline-offset: 2px; }
+.seed-control input, .seed-control select { font: inherit; padding: 8px 10px; width: 220px; max-width: 100%; border: 1px solid #426772; border-radius: 4px; }
+.seed-control input:focus, .seed-control select:focus { outline: 3px solid #397184; outline-offset: 2px; }
 .seed-control input[aria-invalid="true"] { border-color: #a33618; }
 .seed-control p { font-size: .9rem; margin-top: 6px; }
 .means, .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
