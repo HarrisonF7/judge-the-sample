@@ -4,6 +4,7 @@ import csv from '../data/clinic_visits.csv?raw';
 import { parseVisits, createDisplay } from './sampling.js';
 import './style.css';
 import Experiments from './Experiments.jsx';
+import Challenge from './Challenge.jsx';
 
 const SEED = 20261105;
 const DEFAULT_N = 100;
@@ -83,6 +84,7 @@ function App() {
       <details><summary>View the {display.sample.length} selected appointment IDs</summary><p className="ids">{display.sample.map(row => row.visit_id).sort((a, b) => a - b).join(', ')}</p></details>
     </section>
     <Experiments population={population} />
+    <Challenge population={population} />
     <footer>Source: simulated clinic_visits.csv · Waiting times are measured in minutes. Original data remain unchanged.</footer>
   </main>;
 }

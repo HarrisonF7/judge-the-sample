@@ -150,6 +150,22 @@ export function runExperiments(rows, seed, repetitions) {
   };
 }
 
+export function shuffledPopulation(rows, seed) {
+  return simpleRandomSample(rows, rows.length, seed);
+}
+
+export function runOrderingChallenge(rows, shuffleSeed = 42, simulationSeed = 20261105) {
+  if (rows.length !== 10000) throw new Error('This challenge requires the original 10,000 appointments.');
+  for (const seed of [shuffleSeed, simulationSeed]) {
+    if (!Number.isInteger(seed) || seed < 0 || seed > 4294967295) throw new Error('Seeds must be whole numbers from 0 to 4,294,967,295.');
+  }
+  const shuffled = shuffledPopulation(rows, shuffleSeed);
+  const baseline = { ...repeatedSampling(rows, 'systematic', 100, null), population: 'Baseline · chronological', orderDescription: 'Original chronological order' };
+  const modified = { ...repeatedSampling(shuffled, 'systematic', 100, null), population: `Shuffled · order modified · shuffle seed ${shuffleSeed}`, orderDescription: `Fixed shuffled order (shuffle seed ${shuffleSeed})` };
+  const alternative = { ...repeatedSampling(rows, 'srs', 100, simulationSeed, 1000), population: 'Baseline membership · SRS alternative', challengeAlternative: true };
+  return { shuffleSeed, simulationSeed, results: [baseline, modified, alternative] };
+}
+
 // One common bin range and percentage scale per comparison, including the true mean.
 export function estimateDistributions(results) {
   const values = results.flatMap(r => [...r.estimates, r.trueMean]);
