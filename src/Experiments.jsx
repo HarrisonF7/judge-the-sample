@@ -3,30 +3,31 @@ import { runExperiments, estimateDistributions } from './sampling.js';
 const names = { srs: 'Simple random', systematic: 'Systematic', stratified: 'Weekday-stratified' };
 const fmt = x => x.toFixed(4);
 
-export function Comparison({ title, results, challenge = false }) {
-  const d = estimateDistributions(results);
+export function Comparison({ title, results, challenge = false, distribution, chartOffset = 0 }) {
+  const d = distribution ?? estimateDistributions(results);
   const x = value => 44 + (value - d.lower) / (d.upper - d.lower) * 300;
   return <section className="experiment-comparison"><h3>{title}</h3>
     <p>{challenge ? 'Same 10,000 appointments in both conditions' : 'Baseline population'} · true population mean: <strong>{fmt(results[0].trueMean)} minutes</strong>. Common bins and axis scales within this experiment.</p>
     <div className="experiment-charts">{results.map((r, index) => <article className="panel" key={`${r.population}-${r.method}-${r.n}`}>
       <h4>{names[r.method]} · n = {r.n}</h4>
       {challenge && <p><strong>{r.population}</strong> · true mean {fmt(r.trueMean)} minutes</p>}
+      {r.reusedFrom && <p><strong>Reused from {r.reusedFrom}.</strong> {r.reuseExplanation}</p>}
       <p><strong>{r.type === 'Exact' ? 'Exact enumeration' : r.type}</strong> · {r.count} {r.type === 'Exact' ? 'equally likely starts · no sampling seed' : `repetitions · seed ${r.seed}`}</p>
       {r.method === 'stratified' && <p>Weekday allocation: {r.allocation.map(g => `${g.day} ${g.count}/${g.population} (weight ${g.weight})`).join('; ')}. Proportional largest remainder; SRS within weekdays; population-weighted estimate.</p>}
       {r.method === 'systematic' && <p>{r.orderDescription ?? 'Chronological file order'} · interval k = 100 · all starts 1–100, each used once.</p>}
-      {r.method === 'srs' && r.n === 100 && <p>{r.challengeAlternative ? 'SRS without replacement from the same population, using baseline array order. Population membership and values match both systematic conditions.' : 'Same SRS n = 100 result reused in both experiments.'}</p>}
+      {r.method === 'srs' && r.n === 100 && <p>{r.challengeAlternative ? r.reusedFrom ? 'SRS without replacement; baseline samples reused for the shuffled condition.' : 'SRS without replacement from the same population, using baseline array order. Population membership and values match both systematic conditions.' : 'Same SRS n = 100 result reused in both experiments.'}</p>}
       <svg viewBox="0 0 370 270" role="img" aria-label={`${names[r.method]}, n ${r.n}: distribution of estimates in minutes. Vertical axis is percentage; dashed line is true population mean.`}>
         {[0,1,2,3,4].map(i => <g key={i}><line className="grid" x1="44" x2="344" y1={200-i*40} y2={200-i*40}/><text x="38" y={204-i*40} textAnchor="end">{d.yMax*i/4}%</text></g>)}
-        {d.charts[index].map((b,i) => <rect key={i} className="population-bar" x={x(b.start)+1} y={200-b.percent/d.yMax*160} width="13" height={b.percent/d.yMax*160}><title>{fmt(b.start)}–&lt;{fmt(b.end)} minutes: {b.count} estimates ({b.percent.toFixed(1)}%)</title></rect>)}
+        {d.charts[index + chartOffset].map((b,i) => <rect key={i} className="population-bar" x={x(b.start)+1} y={200-b.percent/d.yMax*160} width="13" height={b.percent/d.yMax*160}><title>{fmt(b.start)}–&lt;{fmt(b.end)} minutes: {b.count} estimates ({b.percent.toFixed(1)}%)</title></rect>)}
         <line className="true-mean-line" x1={x(r.trueMean)} x2={x(r.trueMean)} y1="35" y2="200"/>
         <text x="194" y="20" textAnchor="middle">Dashed line: true population mean</text>
         {[0,1,2].map(i => {const v=d.lower+(d.upper-d.lower)*i/2;return <text key={i} x={x(v)} y="222" textAnchor="middle">{v.toFixed(2)}</text>;})}
         <text x="194" y="250" textAnchor="middle">Estimated mean (minutes)</text>
       </svg>
-      <details><summary>View distribution bin counts</summary><table><thead><tr><th>Minutes [lower, upper)</th><th>Estimates</th><th>%</th></tr></thead><tbody>{d.charts[index].map((b,i)=><tr key={i}><td>{fmt(b.start)}–{fmt(b.end)}</td><td>{b.count}</td><td>{b.percent.toFixed(1)}</td></tr>)}</tbody></table></details>
+      <details><summary>View distribution bin counts</summary><table><thead><tr><th>Minutes [lower, upper)</th><th>Estimates</th><th>%</th></tr></thead><tbody>{d.charts[index + chartOffset].map((b,i)=><tr key={i}><td>{fmt(b.start)}–{fmt(b.end)}</td><td>{b.count}</td><td>{b.percent.toFixed(1)}</td></tr>)}</tbody></table></details>
       {r.type==='Exact' && <details><summary>View all 100 starts and estimates</summary><table><thead><tr><th>Start</th><th>Estimate (minutes)</th></tr></thead><tbody>{r.estimates.map((v,i)=><tr key={i}><td>{i+1}</td><td>{fmt(v)}</td></tr>)}</tbody></table></details>}
     </article>)}</div>
-    <div className="table-scroll"><table><caption>{title} · current results · all metrics in minutes</caption><thead><tr>{['Population / condition','Method','n','Type','Sampling seed','Repetitions / starts','Bias','SD','RMSE'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{results.map(r=><tr key={`${r.population}-${r.method}-${r.n}`}><td>{r.population}</td><td>{names[r.method]}</td><td>{r.n}</td><td>{r.type === 'Exact' ? 'Exact enumeration' : r.type}</td><td>{r.seed??'Not used'}</td><td>{r.count} {r.type==='Exact'?'starts':'repetitions'}</td><td>{fmt(r.bias)}</td><td>{fmt(r.sd)}</td><td>{fmt(r.rmse)}</td></tr>)}</tbody></table></div>
+    <div className="table-scroll"><table><caption>{title} · current results · all metrics in minutes</caption><thead><tr>{['Population / condition','Method','n','Type','Sampling seed','Repetitions / starts','Bias','SD','RMSE'].map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{results.map(r=><tr key={`${r.population}-${r.method}-${r.n}`}><td>{r.population}{r.reusedFrom && <><br /><strong>Reused baseline draws</strong></>}</td><td>{names[r.method]}</td><td>{r.n}</td><td>{r.type === 'Exact' ? 'Exact enumeration' : r.type}</td><td>{r.seed??'Not used'}</td><td>{r.count} {r.type==='Exact'?'starts':'repetitions'}</td><td>{fmt(r.bias)}</td><td>{fmt(r.sd)}</td><td>{fmt(r.rmse)}</td></tr>)}</tbody></table></div>
   </section>;
 }
 

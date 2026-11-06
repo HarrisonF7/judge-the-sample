@@ -163,7 +163,17 @@ export function runOrderingChallenge(rows, shuffleSeed = 42, simulationSeed = 20
   const baseline = { ...repeatedSampling(rows, 'systematic', 100, null), population: 'Baseline · chronological', orderDescription: 'Original chronological order' };
   const modified = { ...repeatedSampling(shuffled, 'systematic', 100, null), population: `Shuffled · order modified · shuffle seed ${shuffleSeed}`, orderDescription: `Fixed shuffled order (shuffle seed ${shuffleSeed})` };
   const alternative = { ...repeatedSampling(rows, 'srs', 100, simulationSeed, 1000), population: 'Baseline membership · SRS alternative', challengeAlternative: true };
-  return { shuffleSeed, simulationSeed, results: [baseline, modified, alternative] };
+  const stratified = { ...repeatedSampling(rows, 'stratified', 100, simulationSeed, 1000), population: 'Baseline · chronological' };
+  const reuse = (result) => ({
+    ...result,
+    population: `Shuffled · order modified · shuffle seed ${shuffleSeed}`,
+    reusedFrom: result.population,
+    reuseExplanation: 'Reused baseline draws: reordering changes neither population membership nor this sampling design. The same appointment samples, estimates, and metrics are paired across conditions; no additional repetitions were generated. This does not claim that independently rerunning the array-based sampler on shuffled rows with the same seed would select identical appointment IDs.',
+  });
+  const additionalResults = [stratified, reuse(stratified), reuse(alternative)];
+  const results = [baseline, modified, alternative];
+  const distributions = estimateDistributions([...results, ...additionalResults]);
+  return { shuffleSeed, simulationSeed, results, additionalResults, distributions };
 }
 
 // One common bin range and percentage scale per comparison, including the true mean.

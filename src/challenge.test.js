@@ -58,3 +58,38 @@ test('challenge separates shuffle and simulation seeds, labels conditions, and u
   assert.throws(() => runOrderingChallenge(rows.slice(0,100),42,7));
   assert.throws(() => runOrderingChallenge(rows,-1,7));
 });
+
+test('extension preserves original calculations and covers all six method–condition combinations', () => {
+  const run = runOrderingChallenge(rows,42,7);
+  const originals = [
+    repeatedSampling(rows,'systematic',100,null),
+    repeatedSampling(shuffledPopulation(rows,42),'systematic',100,null),
+    repeatedSampling(rows,'srs',100,7,1000),
+  ];
+  originals.forEach((old,i) => {
+    for (const key of ['estimates','bias','sd','rmse','seed','count','n','trueMean','type']) assert.deepEqual(run.results[i][key],old[key]);
+  });
+  const [baselineStratified, shuffledStratified, shuffledSrs] = run.additionalResults;
+  assert.deepEqual(baselineStratified.estimates,repeatedSampling(rows,'stratified',100,7,1000).estimates);
+  for (const [baseline,reused] of [[baselineStratified,shuffledStratified],[run.results[2],shuffledSrs]]) {
+    assert.strictEqual(reused.estimates,baseline.estimates);
+    assert.equal(reused.reusedFrom,baseline.population);
+    assert.match(reused.reuseExplanation,/no additional repetitions/);
+    for (const key of ['bias','sd','rmse','seed','count','n','trueMean']) assert.equal(reused[key],baseline[key]);
+  }
+  assert.strictEqual(shuffledStratified.allocation,baselineStratified.allocation);
+  assert.deepEqual(baselineStratified.allocation.map(g => [g.count,g.weight]),Array.from({length:5},()=>[20,0.2]));
+  const all = [...run.results,...run.additionalResults];
+  const combinations = all.map(r => `${r.method}:${r.population.startsWith('Shuffled')?'shuffled':'baseline'}`);
+  assert.equal(new Set(combinations).size,6);
+  assert.ok(all.every(r => r.n===100 && r.trueMean===meanWait(rows)));
+  assert.equal(run.distributions.charts.length,6);
+  run.distributions.charts.forEach((bins,i) => {
+    assert.deepEqual(bins.map(b=>[b.start,b.end]),run.distributions.charts[0].map(b=>[b.start,b.end]));
+    assert.equal(bins.reduce((sum,b)=>sum+b.count,0),all[i].count);
+    assert.ok(bins.every(b=>b.percent<=run.distributions.yMax));
+  });
+  const shuffleChange = runOrderingChallenge(rows,99,7);
+  assert.deepEqual(baselineStratified,shuffleChange.additionalResults[0]);
+  assert.deepEqual(shuffledStratified.estimates,shuffleChange.additionalResults[1].estimates);
+});
