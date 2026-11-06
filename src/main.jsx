@@ -1,10 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import csv from '../data/clinic_visits.csv?raw';
 import { parseVisits, createDisplay } from './sampling.js';
 import './style.css';
 import Experiments from './Experiments.jsx';
 import Challenge from './Challenge.jsx';
+import HospitalEntrance from './HospitalEntrance.jsx';
+import decisionsUrl from '../DECISIONS.md?url';
+import readmeUrl from '../README.md?url';
 
 const SEED = 20261105;
 const DEFAULT_N = 100;
@@ -25,7 +28,7 @@ function Histogram({ title, bins, yMax, sample = false, count, blocked = false }
         return <g key={i}><line x1={left} x2={left + width} y1={y} y2={y} className="grid" /><text x={left - 8} y={y + 4} textAnchor="end">{value}%</text></g>;
       })}
       {bins.map((bin, i) => <rect key={bin.start} x={left + i * step + 1} y={top + height - bin.percent / yMax * height} width={Math.max(1, step - 2)} height={bin.percent / yMax * height} className={sample ? 'sample-bar' : 'population-bar'}><title>{bin.start} to under {bin.end} minutes: {bin.count} appointments ({bin.percent.toFixed(2)}%)</title></rect>)}
-      {bins.map((bin, i) => <text key={bin.start} x={left + i * step} y={top + height + 20} textAnchor="middle">{bin.start}</text>)}
+      {bins.map((bin, i) => i % Math.ceil(bins.length / 8) === 0 ? <text key={bin.start} x={left + i * step} y={top + height + 20} textAnchor="middle">{bin.start}</text> : null)}
       <text x={left + width} y={top + height + 20} textAnchor="middle">{bins.at(-1).end}</text>
       <text x={left + width / 2} y={287} textAnchor="middle">Waiting time (minutes)</text>
     </svg>
@@ -50,12 +53,17 @@ function App() {
     if (/^\d+$/.test(value) && Number(value) <= 4294967295) setSeed(Number(value));
   }
 
-  return <main>
+  return <main id="hospital-terminal" tabIndex={-1}>
+    <div className="terminal-masthead"><span>Harrison Memorial / Research records</span><span className="terminal-status">LOCAL TERMINAL · ONLINE</span></div>
+    <nav className="stage-navigation" aria-label="Assignment stages">
+      <a href="#stage-1">01 · Population</a><a href="#stage-2">02 · Visualization</a><a href="#stage-3">03 · Sampling</a><a href="#stage-4">04 · Experiments</a><a href="#stage-5">05 · Challenge</a><a href="#stage-6">06 · Evidence</a>
+    </nav>
     <header><p className="eyebrow">Judge the Sample · Stage 3</p><h1>Clinic waiting times</h1><p>Explore the waiting-time distribution and where the selected appointments fall in the chronological record.</p></header>
-    <section className="context" aria-label="Population and sample settings">
+    <section id="stage-1" className="context" aria-label="Population and sample settings">
+      <p className="file-label">Stage 1 · Population and target / Stage 3 · Sampling interactions</p>
       <strong>Baseline population: {number(population.length)} simulated appointments</strong>
       <p>The finite population is every appointment in this file, across 100 weeks. It does not represent every clinic or appointment.</p>
-      <div className="seed-control"><label htmlFor="method">Sampling method</label><select id="method" value={method} onChange={event => setMethod(event.target.value)}><option value="srs">Simple random</option><option value="systematic">Systematic</option><option value="stratified" disabled={n < 5}>Stratified by weekday{n < 5 ? " (requires n ≥ 5)" : ""}</option></select></div>
+      <div id="stage-3" className="seed-control"><label htmlFor="method">Sampling method</label><select id="method" value={method} onChange={event => setMethod(event.target.value)}><option value="srs">Simple random</option><option value="systematic">Systematic</option><option value="stratified" disabled={n < 5}>Stratified by weekday{n < 5 ? " (requires n ≥ 5)" : ""}</option></select></div>
       <div className="seed-control"><label htmlFor="sample-size">Sample size (n)</label><input id="sample-size" type="text" inputMode="numeric" value={sizeInput} aria-invalid={!validSize} aria-describedby="size-help" onChange={event => { const value = event.target.value; setSizeInput(value); if (/^\d+$/.test(value) && Number(value) >= 1 && Number(value) <= population.length) setN(Number(value)); }} /><p id="size-help">{validSize ? "Enter a whole number from 1 to 10,000. The same n is retained when switching methods." : "Enter a whole number from 1 to 10,000. The last valid n remains active."}</p></div>
       {n < 5 && <p role="status">Stratified sampling is unavailable below n = 5: each of the five weekdays must have at least one sampled appointment.</p>}
       <p><strong>{METHODS[method]} · current n = {n} · without replacement</strong><br />Current sample seed: <code>{seed}</code> · One sample, not repeated-sampling results.</p>
@@ -69,6 +77,7 @@ function App() {
       {method === 'systematic' && <div><p><strong>Selection rule: {display.whole ? 'whole-number' : 'fractional'} interval.</strong> In chronological file order, k = N/n = {display.interval.toPrecision(12)}. Random start {display.whole ? 'r' : 'u'} = {display.start.toPrecision(12)}.</p><p>{display.whole ? 'Choose r uniformly from 1…k, then rows r, r+k, … (n rows).' : 'Choose u uniformly in (0, k], then rows ceil(u + j × k), j = 0…n−1; row indices are guarded not to exceed N.'} Exactly n distinct rows; each row has inclusion probability n/N. Estimate = sample mean. Row order is time order: week, weekday, appointment slot.</p></div>}
       {method === 'stratified' && <div><p><strong>Selection rule:</strong> Group by weekday. Allocate proportionally using largest-remainder rounding, at least one per weekday and no more than its population size; allocations total n. Ties use Mon–Fri order. Within each weekday, select by simple random sampling without replacement.</p><p><strong>Estimate:</strong> Sum each weekday’s sample mean multiplied by its population weight (N_h/N), rather than averaging all sampled appointments together.</p>{!display.blocked && <table><caption>Weekday allocation · n = {n}</caption><thead><tr><th>Weekday</th><th>Population N_h</th><th>Weight N_h/N</th><th>Allocated n_h</th></tr></thead><tbody>{display.allocation.map(group => <tr key={group.day}><td>{group.day}</td><td>{number(group.rows.length)}</td><td>{(group.weight * 100).toFixed(1)}%</td><td>{group.count}</td></tr>)}</tbody></table>}</div>}
     </section>
+    <p id="stage-2" className="file-label">Stage 2 · Population and sample visualization</p>
     <section className="means" aria-label="Mean waiting times">
       <div><h2>{method === "stratified" ? "Population-weighted stratified estimate" : "Sample mean"}</h2><p className="value">{display.blocked ? "Unavailable" : display.sampleMean.toFixed(4)} {!display.blocked && <span>minutes</span>}</p><p>{display.blocked ? "No sample selected: n must be at least 5." : `Single-sample estimate · ${METHODS[method]} · ${n} appointments`}</p></div>
       <div><h2>True population mean</h2><p className="value">{display.populationMean.toFixed(4)} <span>minutes</span></p><p>Calculated from all 10,000 appointments</p></div>
@@ -83,10 +92,19 @@ function App() {
       </svg><p className="axis-note">Read left to right within each week, then continue on the next row. Appointment 1 → appointment 10,000.</p></div></div>
       <details><summary>View the {display.sample.length} selected appointment IDs</summary><p className="ids">{display.sample.map(row => row.visit_id).sort((a, b) => a - b).join(', ')}</p></details>
     </section>
-    <Experiments population={population} />
-    <Challenge population={population} />
+    <div id="stage-4"><Experiments population={population} /></div>
+    <div id="stage-5"><Challenge population={population} /></div>
+    <section id="stage-6" className="submission-records"><p className="file-label">Records archive / Assignment documentation</p><h2>Stage 6 · Evidence and findings</h2><p>The results table, findings, challenge notes, and AI-use disclosure remain in the project documents.</p><a href={decisionsUrl} download="DECISIONS.md">Download DECISIONS.md</a><a href={readmeUrl} download="README.md">Download README.md</a></section>
     <footer>Source: simulated clinic_visits.csv · Waiting times are measured in minutes. Original data remain unchanged.</footer>
   </main>;
 }
 
-createRoot(document.getElementById('root')).render(<App />);
+function HospitalApp() {
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    if (entered) document.getElementById('hospital-terminal')?.focus();
+  }, [entered]);
+  return entered ? <App /> : <HospitalEntrance onEnter={() => setEntered(true)} />;
+}
+
+createRoot(document.getElementById('root')).render(<HospitalApp />);
