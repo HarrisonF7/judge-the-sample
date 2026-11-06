@@ -34,7 +34,7 @@ The application displays the selected observations, sampling settings, estimated
 
 **Experiment B — Sample size:** Compares SRS at n = 1, 10, and 100.
 
-**Stage 5 — Appointment-order challenge:** Compares the original chronological appointment order with a reproducibly shuffled order, evaluating systematic sampling and simple random sampling (SRS) under both conditions.
+**Stage 5 — Appointment-order challenge:** Compares the original chronological appointment order with a reproducibly shuffled order, evaluating systematic sampling, simple random sampling (SRS), and weekday-stratified sampling under both conditions (six comparisons).
 
 The experiments display distributions of estimates, bias, standard deviation (SD), and root mean squared error (RMSE).
 
@@ -47,7 +47,8 @@ The experiments display distributions of estimates, bias, standard deviation (SD
 | Method comparison: Weekday-stratified | 100 | 42 | 1,000 Monte Carlo repetitions |
 | Sample-size comparison: SRS | 1, 10, 100 | 42 | 1,000 Monte Carlo repetitions per size |
 | Stage 5: Systematic, baseline and shuffled | 100 | Shuffle seed 42 | 100 exact starts per condition |
-| Stage 5: SRS, baseline and shuffled | 100 | Simulation seed 20261105 | 1,000 Monte Carlo repetitions, reused across conditions |
+| Stage 5: SRS, baseline and shuffled | 100 | Simulation seed 20261105; shuffle seed 42 identifies modified order | 1,000 Monte Carlo repetitions, baseline draws reused for shuffled condition |
+| Stage 5: Weekday-stratified, baseline and shuffled | 100 | Simulation seed 20261105; shuffle seed 42 identifies modified order | 1,000 Monte Carlo repetitions, baseline draws reused for shuffled condition; 20 per weekday, weights 0.2 each |
 
 ## Results and Findings
 
@@ -61,7 +62,7 @@ At a sample size of 100 appointments, the three methods produced the following r
 | Systematic | 0.0000 | 6.9567 | 6.9567 |
 | Weekday-stratified | -0.0314 | 1.3952 | 1.3955 |
 
-Weekday-stratified sampling had the lowest RMSE, closely followed by simple random sampling. Systematic sampling had a much higher SD and RMSE because the chronological ordering of appointments created patterns that affected which appointments were selected.
+Weekday-stratified sampling had the lowest observed RMSE in this Monte Carlo run, closely followed by simple random sampling. The small difference may vary with the seed and does not establish a stable ranking. Systematic sampling had a much higher SD and RMSE for the chronological ordering, consistent with the ordering sensitivity investigated in Stage 5.
 
 All three methods had bias close to zero, but systematic sampling produced much less consistent estimates.
 
@@ -77,7 +78,7 @@ Simple random sampling was evaluated at sample sizes of 1, 10, and 100 appointme
 
 As sample size increased, both SD and RMSE decreased substantially. Samples of 100 appointments produced much more consistent estimates of the true population mean than samples of 1 or 10 appointments.
 
-These results demonstrate the law of large numbers: larger random samples tend to produce estimates closer to the population mean, although individual estimates are not guaranteed to be accurate.
+For SRS without replacement from this fixed population, larger samples reduce the sampling variance of the mean. The results at the three tested sizes illustrate that reduction; they do not guarantee that every individual larger sample is closer to the true mean.
 
 ### Stage 5 — Appointment-Order Challenge
 
@@ -89,16 +90,21 @@ All comparisons used a sample size of 100 appointments.
 |---|---:|---:|---:|
 | Systematic — Original order | 0.0000 | 6.9567 | 6.9567 |
 | Systematic — Shuffled order | 0.0000 | 1.4752 | 1.4752 |
-| SRS alternative | 0.0863 | 1.4572 | 1.4597 |
+| SRS — Baseline alternative | 0.0863 | 1.4572 | 1.4597 |
+| Weekday-stratified — Baseline | -0.0409 | 1.4291 | 1.4297 |
+| Weekday-stratified — Shuffled (reused) | -0.0409 | 1.4291 | 1.4297 |
+| SRS — Shuffled (reused) | 0.0863 | 1.4572 | 1.4597 |
 
-Shuffling the appointment order substantially reduced the variability of systematic sampling. Its RMSE decreased from 6.9567 to 1.4752 minutes, making its performance much closer to simple random sampling.
+For the tested ordering with shuffle seed 42, shuffling substantially reduced the variability of systematic sampling. Its RMSE decreased from 6.9567 to 1.4752 minutes, making its performance much closer to simple random sampling.
+
+The shuffled SRS and weekday-stratified panels reuse the baseline appointment samples, estimates, and metrics because reordering changes neither membership nor these sampling designs. Weekday groups and weights remain unchanged. These are paired Monte Carlo results, not independent runs or exact distributions. Independently running the array-based sampler on shuffled rows with the same seed could select different appointment IDs. Systematic distributions are calculated separately for each order.
 
 This demonstrates that systematic sampling can be sensitive to patterns in the population's row order. Although systematic sampling was unbiased when considering all possible random starts, its estimates were much less reliable with the original chronological ordering.
 
 
 ## Final Conclusion and Limitations
 
-For this simulated clinic population, I would trust weekday-stratified sampling with a sample size of 100 appointments. It produced the lowest RMSE (1.3955 minutes) in Experiment A, although simple random sampling performed almost as well (RMSE = 1.4402 minutes).
+For this simulated clinic population, I would trust weekday-stratified sampling with a sample size of 100 appointments. It produced the lowest observed RMSE (1.3955 minutes) in Experiment A, although simple random sampling performed almost as well (RMSE = 1.4402 minutes). This small Monte Carlo difference should be checked with different seeds before treating it as a stable advantage.
 
 I would also consider simple random sampling a reliable alternative because it does not depend on the ordering of appointments. I would be more cautious about using systematic sampling on the original chronological dataset because its RMSE was substantially higher (6.9567 minutes).
 
@@ -114,17 +120,35 @@ The `evidence/` folder contains screenshots documenting the experiment results a
 
 - `evidence/stage4_methods.png` — Experiment A: Comparison of simple random, systematic, and weekday-stratified sampling at n = 100.
 - `evidence/stage4_sample_sizes.png` — Experiment B: Comparison of simple random sampling at n = 1, 10, and 100.
-- `evidence/stage5_comparison.png` — Stage 5: Comparison of systematic sampling under original and shuffled appointment ordering, with an SRS alternative.
+- `evidence/stage5_comparison.png` — Stage 5: Clean metrics capture for the original three panels; replaces the earlier preview-obscured screenshot.
+- `evidence/stage4_methods_distributions.png` — Experiment A distributions, true-mean reference lines, calculation labels, seeds, and weekday allocation.
+- `evidence/stage4_sample_size_distributions.png` — Experiment B distributions and true-mean reference lines at n = 1, 10, and 100.
+- `evidence/stage5_original_distributions.png` — Baseline systematic, shuffled systematic, and baseline SRS distributions with current run settings.
+- `evidence/stage5_additional_distributions.png` — Baseline and shuffled weekday-stratified and shuffled SRS distributions, including allocation, weights, seeds, and reuse explanations.
+- `evidence/stage5_additional_metrics.png` — Added Stage 5 metrics and reused-result labels.
 
-The screenshots include the sampling settings, seeds, repetitions or exact starts, and numerical results used to support the findings.
+Together, the screenshots show the distributions, true-mean reference lines, settings, seeds, repetitions or exact starts, allocations, reused-result labels, and numerical results. New captures were saved directly from the running application without pixel editing. No individual capture is intended to contain the whole dashboard.
 
 ## How to Run the App
 
-The application is built with React and Vite and requires Node.js and npm.
+The application is built with React and Vite. Use Node.js 20.19+ within version 20, or Node.js 22.12+ (including newer major versions), with npm, and a Bash terminal. The launcher runs npm install if node_modules is missing; all app calculations run in the browser without a backend.
 
 1. Open a terminal in the project folder.
 2. Run `bash run_app.sh`.
 3. Open the local URL displayed in the terminal (typically `http://localhost:5173/`).
 4. Use the app to explore the population, compare sampling methods, run repeated sampling experiments, and investigate the appointment-order challenge.
 
-The experiments use fixed seeds and settings to make their results reproducible.
+5. Stop the local server with **Ctrl+C** in the terminal. If port 5173 is already occupied, stop the existing app terminal before restarting.
+
+The single-sample workspace and Stage 4 default to seed 20261105; Stage 4 defaults to 100 Monte Carlo repetitions. Set seed 42 and 1,000 repetitions to reproduce the Stage 4 evidence. Stage 5 defaults to shuffle seed 42 and simulation seed 20261105 with 1,000 repetitions per Monte Carlo method. Apply experiment settings with Run experiments or Run challenge.
+
+## Test and Build
+
+From the project folder, after dependencies are installed:
+
+```bash
+node --test src/*.test.js
+npm run build
+```
+
+The build creates dist/. Dependencies are pinned in package.json and package-lock.json. Local running is sufficient unless the course requires a public deployment; screenshots alone are not a live app.

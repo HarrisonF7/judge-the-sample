@@ -4,7 +4,7 @@
 
 - A Bash terminal: Terminal on macOS/Linux; **Git Bash** or **WSL** on Windows (PowerShell and
   Command Prompt cannot run `bash run_app.sh`).
-- `git`, and Node.js 20+ (it includes `npm`). Your app is a browser-only JavaScript app; we
+- `git`, and Node.js 20.19+ within version 20, or Node.js 22.12+ (including newer major versions); it includes `npm`. Your app is a browser-only JavaScript app; we
   suggest React with Vite.
 - An AI coding agent that can read and edit this folder and has a **Plan mode**.
 
