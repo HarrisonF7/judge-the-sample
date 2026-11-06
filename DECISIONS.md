@@ -48,7 +48,7 @@ For the baseline population of 10,000 clinic appointments, all three sampling me
 
 For simple random sampling, increasing the sample size made the estimates much more consistent and reduced the typical estimation error. At n = 1, the SD was 13.9674 minutes and the RMSE was 13.9691. At n = 10, these decreased to 4.5941 and 4.5942, and at n = 100, they decreased further to 1.4398 and 1.4402. This shows that larger samples generally produce estimates closer to the true population mean, although an individual larger sample can still be less accurate than a smaller one. A larger sample also cannot automatically fix problems caused by the sampling method or patterns in the population's ordering, as shown by the high variability of systematic sampling at n = 100.
 
-## 5. Challenge (hypothesis written with AI assistance before implementation)
+## 5. Challenge (hypothesis written independently before consulting AI)
 
 Hypothesis, recorded before testing the challenge:
 
@@ -67,5 +67,4 @@ After I test it:
 
 ## 6. AI use
 
-- **Tools used:** ChatGPT and Codex in Visual Studio Code.
-- **What I asked my agent to do, and what I checked myself:** I used ChatGPT to help understand the assignment instructions and organize the project. I used Codex to help implement the JavaScript app, including the population visualization, sampling methods, and repeated-sampling experiments. I wrote all the documentation myself, including my project decisions, explanations, and interpretations of the results. I personally tested the app, compared results across different seeds and repetition counts, verified the systematic sampling calculations, and checked that the results matched the assignment requirements.
+I used ChatGPT to help understand the assignment instructions, organize the project, and revise documentation. I used Codex in Visual Studio Code to help implement the JavaScript app, including the population visualization, sampling methods, and repeated-sampling experiments. I independently developed and recorded my Stage 5 hypothesis before consulting AI about its implementation. I reviewed the results, tested the app, compared results across different seeds and repetition counts, and checked the systematic sampling calculations against the assignment requirements.
