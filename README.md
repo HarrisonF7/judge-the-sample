@@ -1,3 +1,5 @@
+[https://harrisonf7.github.io/judge-the-sample/](https://harrisonf7.github.io/judge-the-sample/)
+
 # Judge the Sample: My Sampling App
 
 **Central question:** Which sampling method would you trust for this population, at what sample size, and with what limits?

@@ -74,4 +74,10 @@ After I test it:
 
 ## 6. AI use
 
-I used ChatGPT to help understand the assignment instructions, organize the project, and revise documentation. I used Codex in Visual Studio Code to help implement the JavaScript app, including the population visualization, sampling methods, and repeated-sampling experiments. I independently developed and recorded my Stage 5 hypothesis before consulting AI about its implementation. I reviewed the results, tested the app, compared results across different seeds and repetition counts, and checked the systematic sampling calculations against the assignment requirements.## 5. Challenge (hypothesis developed with AI assistance before implementation)
+I used ChatGPT to help understand the assignment instructions, organize the project, and revise documentation.
+
+I used Codex in Visual Studio Code to implement and debug the React and Vite JavaScript app, including the population and sample visualizations, sampling controls and methods, repeated-sampling experiments, and baseline-versus-shuffled challenge comparisons. I also requested assistance with the hospital-themed entrance and GitHub Pages deployment configuration.
+
+I asked Codex to check sampling without replacement, systematic intervals and starts, weekday allocations and population-weighted estimates, reproducibility, distributions, and bias, SD, and RMSE. Codex ran the automated checks: `node --test src/*.test.js` passed all 13 tests (13/13), and `npm run build` completed successfully. Codex also reported independently verifying all 12 documented results against the application's calculations. These automated and code-based checks were performed by Codex; they are distinct from my personal review described below.
+
+I independently developed and recorded my Stage 5 hypothesis before consulting AI about its implementation. I reviewed the results, tested the app, compared results across different seeds and repetition counts, and checked the systematic sampling calculations against the assignment requirements.
